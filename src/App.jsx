@@ -40,6 +40,54 @@ const OCIMetricsUpdater = () => {
     addLog(`${type.replace(/([A-Z])/g, ' $1').toUpperCase()} removed`, 'info');
   };
 
+  const customOrder = [
+    'HUBOVPNVM',
+    'HUBADVM',
+    'UATCACWTVM',
+    'UATCACOLAVM',
+    'UATCACPACIVM',
+    'UATCACMWVM',
+    'UATCACSHDVM',
+    'UATWLSFREVM',
+    'UATWLSBAEVM',
+    'UATWLSLOGVM',
+    'UATWRBFREVM',
+    'UATWRBBAEVM',
+    'UATANLKAFVM',
+    'UATANLPBCNVM',
+    'UATANLCLHDBVM',
+    'PRDANLKAFVM1',
+    'PRDANLKAFVM2',
+    'PRDANLKAFVM3',
+    'PRDANLPUBVM1',
+    'PRDANLPUBVM2',
+    'PRDANLCNRPVM1',
+    'PRDANLCNRPVM2',
+    'PRDCACTSNVM1',
+    'PRDCACTSNVM2',
+    'PRDCACOAUVM1',
+    'PRDCACOAUVM2',
+    'PRDCACFSVM1',
+    'PRDCACFSVM2',
+    'PRDCACSHDVM1',
+    'PRDCACSHDVM2',
+    'PRDCACADVM',
+    'PRDCACWTVM',
+    'PRDCACMWVM',
+    'PRDWLSFREVM1',
+    'PRDWLSFREVM2',
+    'PRDWLSBAEVM1',
+    'PRDWLSBAEVM2',
+    'PRDWRBFREVM1',
+    'PRDWRBFREVM2',
+    'PRDWRBBAEVM1',
+    'PRDWRBBAEVM2',
+    'PRDANLCLHDBVM1',
+    'PRDANLCLHDBVM2',
+    'PRDWLSCLHDBVM1',
+    'PRDWLSCLHDBVM2'
+  ];
+
   const getAllInstanceNames = () => {
     const instanceNames = new Set();
     
@@ -55,7 +103,27 @@ const OCIMetricsUpdater = () => {
       });
     });
     
-    return Array.from(instanceNames).sort();
+    const foundInstances = Array.from(instanceNames);
+    
+    // Sort by custom order
+    return foundInstances.sort((a, b) => {
+      const indexA = customOrder.indexOf(a);
+      const indexB = customOrder.indexOf(b);
+      
+      // If both are in custom order, sort by their position
+      if (indexA !== -1 && indexB !== -1) {
+        return indexA - indexB;
+      }
+      
+      // If only A is in custom order, A comes first
+      if (indexA !== -1) return -1;
+      
+      // If only B is in custom order, B comes first
+      if (indexB !== -1) return 1;
+      
+      // If neither is in custom order, sort alphabetically
+      return a.localeCompare(b);
+    });
   };
 
   const getLatestMetricValue = (csvData, instanceName) => {
