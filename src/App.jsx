@@ -144,6 +144,36 @@ const OCIMetricsUpdater = () => {
         { wch: 15 }  // Memory Max
       ];
 
+      // Format cells: Add % sign and center alignment
+      const range = XLSX.utils.decode_range(ws['!ref']);
+      for (let row = 1; row <= range.e.r; row++) { // Start from row 1 (skip header)
+        for (let col = 2; col <= 5; col++) { // Columns C to F (CPU and Memory columns)
+          const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
+          const cell = ws[cellAddress];
+          if (cell && cell.v !== 'N/A') {
+            // Add % sign to the value
+            cell.t = 's'; // Set type to string
+            cell.v = cell.v + '%';
+            // Center alignment
+            cell.s = {
+              alignment: { horizontal: 'center', vertical: 'center' }
+            };
+          }
+        }
+      }
+
+      // Center align header row
+      for (let col = 0; col <= 5; col++) {
+        const cellAddress = XLSX.utils.encode_cell({ r: 0, c: col });
+        const cell = ws[cellAddress];
+        if (cell) {
+          cell.s = {
+            alignment: { horizontal: 'center', vertical: 'center' },
+            font: { bold: true }
+          };
+        }
+      }
+
       // Add worksheet to workbook
       XLSX.utils.book_append_sheet(wb, ws, 'OCI Metrics');
 
