@@ -23,7 +23,7 @@ Before you begin, ensure you have the following installed:
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/YOUR_USERNAME/OCI-Metrics-Updater.git
+git clone https://github.com/inura-perera/OCI-Metrics-Updater.git
 cd OCI-Metrics-Updater
 ```
 
@@ -171,7 +171,7 @@ npm run dev -- --port 3000
 
 ## License
 
-This project is licensed under the ISC License.
+This project is licensed under the MIT License.
 
 ## Support
 
