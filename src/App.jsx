@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Upload, Download, FileSpreadsheet, X, Plus } from 'lucide-react';
+import { Upload, Download, FileSpreadsheet, X } from 'lucide-react';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 
@@ -11,7 +11,35 @@ const OCIMetricsUpdater = () => {
     memoryMax: null
   });
   const [logs, setLogs] = useState([]);
-  const [compartmentName, setCompartmentName] = useState('');
+  const [selectedProject, setSelectedProject] = useState('KwikPay');
+
+  const projectOrders = {
+    KwikPay: [
+      'HUBOVPNVM', 'HUBADVM', 'UATCACWTVM', 'UATCACOLAVM', 'UATCACPACIVM', 
+      'UATCACMWVM', 'UATCACSHDVM', 'UATWLSFREVM', 'UATWLSBAEVM', 'UATWLSLOGVM',
+      'UATWRBFREVM', 'UATWRBBAEVM', 'UATANLKAFVM', 'UATANLPBCNVM', 'UATANLCLHDBVM',
+      'PRDANLKAFVM1', 'PRDANLKAFVM2', 'PRDANLKAFVM3', 'PRDANLPUBVM1', 'PRDANLPUBVM2',
+      'PRDANLCNRPVM1', 'PRDANLCNRPVM2', 'PRDCACTSNVM1', 'PRDCACTSNVM2', 'PRDCACOAUVM1',
+      'PRDCACOAUVM2', 'PRDCACFSVM1', 'PRDCACFSVM2', 'PRDCACSHDVM1', 'PRDCACSHDVM2',
+      'PRDCACADVM', 'PRDCACWTVM', 'PRDCACMWVM', 'PRDWLSFREVM1', 'PRDWLSFREVM2',
+      'PRDWLSBAEVM1', 'PRDWLSBAEVM2', 'PRDWRBFREVM1', 'PRDWRBFREVM2', 'PRDWRBBAEVM1',
+      'PRDWRBBAEVM2', 'PRDANLCLHDBVM1', 'PRDANLCLHDBVM2', 'PRDWLSCLHDBVM1', 'PRDWLSCLHDBVM2'
+    ],
+    BPL: [
+      'PRDSECVAPTVM', 'PRCBFCAPPVM1', 'PRCBFCAPPVM2', 'PR-DC01', 'PR-ADC01',
+      'PRIASAPPADSYVM', 'PRIASAPPCHCVM', 'PRIASAPPFSVM1', 'PRIASAPPPSVM', 'PRPASWEBWPVM',
+      'PRDCUSTCWPVM', 'PRDCHCAPPVM', 'BPLVDIAPPVM', 'BPLVDIAPPVM3', 'PRDCUSTAPPVM',
+      'PRDCUSTDBVM', 'NPR-ADC01', 'NPIASAPPFSVM', 'NPUATCBFCAPPVM1', 'NPUATCBFCAPPVM2',
+      'NPUATCHCVM', 'NPUATCUSTAPPVM', 'NPUATCUSTDBVM', 'DRCBFCAPPVM-wls-0', 'DRIASAPPADVM',
+      'DRIASAPPFSVM', 'DRIASAPPCHCVM', 'DRCUSTDBVM', 'DRCUSTAPPVM', 'DRCUSTCWPVM'
+    ],
+    UIC: [
+      'PRODMGMTSRV', 'PRODPAMSRV', 'PRODRDSSRV', 'PRODMOAPPSRV2', 'PRODHOAPPSRV1',
+      'PRODHOAPPSRV2', 'UATHOAPPSRV1', 'DRRCWSRV', 'DRMOAPPSRV1', 'DRHOAPPSRV1',
+      'DEVMOAPPSRV1', 'DEVMOAPPSRV2', 'UATMOAPPSRV1'
+    ],
+    Other: []
+  };
 
   const addLog = (message, type = 'info') => {
     setLogs(prev => [...prev, { message, type, time: new Date().toLocaleTimeString() }]);
@@ -40,61 +68,12 @@ const OCIMetricsUpdater = () => {
     addLog(`${type.replace(/([A-Z])/g, ' $1').toUpperCase()} removed`, 'info');
   };
 
-  const customOrder = [
-    'HUBOVPNVM',
-    'HUBADVM',
-    'UATCACWTVM',
-    'UATCACOLAVM',
-    'UATCACPACIVM',
-    'UATCACMWVM',
-    'UATCACSHDVM',
-    'UATWLSFREVM',
-    'UATWLSBAEVM',
-    'UATWLSLOGVM',
-    'UATWRBFREVM',
-    'UATWRBBAEVM',
-    'UATANLKAFVM',
-    'UATANLPBCNVM',
-    'UATANLCLHDBVM',
-    'PRDANLKAFVM1',
-    'PRDANLKAFVM2',
-    'PRDANLKAFVM3',
-    'PRDANLPUBVM1',
-    'PRDANLPUBVM2',
-    'PRDANLCNRPVM1',
-    'PRDANLCNRPVM2',
-    'PRDCACTSNVM1',
-    'PRDCACTSNVM2',
-    'PRDCACOAUVM1',
-    'PRDCACOAUVM2',
-    'PRDCACFSVM1',
-    'PRDCACFSVM2',
-    'PRDCACSHDVM1',
-    'PRDCACSHDVM2',
-    'PRDCACADVM',
-    'PRDCACWTVM',
-    'PRDCACMWVM',
-    'PRDWLSFREVM1',
-    'PRDWLSFREVM2',
-    'PRDWLSBAEVM1',
-    'PRDWLSBAEVM2',
-    'PRDWRBFREVM1',
-    'PRDWRBFREVM2',
-    'PRDWRBBAEVM1',
-    'PRDWRBBAEVM2',
-    'PRDANLCLHDBVM1',
-    'PRDANLCLHDBVM2',
-    'PRDWLSCLHDBVM1',
-    'PRDWLSCLHDBVM2'
-  ];
-
   const getAllInstanceNames = () => {
     const instanceNames = new Set();
     
     Object.values(csvFiles).forEach(csvData => {
       if (!csvData || csvData.length === 0) return;
       
-      // Get all column names except 'group'
       const firstRow = csvData[0];
       Object.keys(firstRow).forEach(key => {
         if (key !== 'group' && key.trim() !== '') {
@@ -104,6 +83,7 @@ const OCIMetricsUpdater = () => {
     });
     
     const foundInstances = Array.from(instanceNames);
+    const customOrder = projectOrders[selectedProject] || [];
     
     // Sort by custom order
     return foundInstances.sort((a, b) => {
@@ -129,7 +109,6 @@ const OCIMetricsUpdater = () => {
   const getLatestMetricValue = (csvData, instanceName) => {
     if (!csvData || csvData.length === 0) return null;
     
-    // Find the column with this instance name
     const firstRow = csvData[0];
     const columnKey = Object.keys(firstRow).find(key => 
       key.trim() === instanceName
@@ -137,7 +116,6 @@ const OCIMetricsUpdater = () => {
     
     if (!columnKey) return null;
     
-    // Get the latest (first) row's value for this instance
     const latestValue = csvData[0][columnKey];
     return typeof latestValue === 'number' ? latestValue : null;
   };
@@ -159,12 +137,9 @@ const OCIMetricsUpdater = () => {
         return;
       }
 
-      // Create worksheet data
       const wsData = [];
       
-      // Add header row
       wsData.push([
-        'Compartment',
         'Instance Display Name',
         'CPU Mean (%)',
         'CPU Max (%)',
@@ -172,14 +147,12 @@ const OCIMetricsUpdater = () => {
         'Memory Max (%)'
       ]);
 
-      // Helper function to round and ensure minimum value of 1
       const formatValue = (value) => {
         if (value === null) return 'N/A';
         const rounded = Math.round(value);
         return rounded < 1 ? 1 : rounded;
       };
 
-      // Add data rows for each instance
       instanceNames.forEach(instanceName => {
         const cpuMean = getLatestMetricValue(csvFiles.cpuMean, instanceName);
         const cpuMax = getLatestMetricValue(csvFiles.cpuMax, instanceName);
@@ -187,7 +160,6 @@ const OCIMetricsUpdater = () => {
         const memoryMax = getLatestMetricValue(csvFiles.memoryMax, instanceName);
 
         wsData.push([
-          compartmentName || 'N/A',
           instanceName,
           formatValue(cpuMean),
           formatValue(cpuMax),
@@ -198,13 +170,10 @@ const OCIMetricsUpdater = () => {
         addLog(`✓ Added: ${instanceName}`, 'success');
       });
 
-      // Create workbook and worksheet
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.aoa_to_sheet(wsData);
 
-      // Set column widths
       ws['!cols'] = [
-        { wch: 20 }, // Compartment
         { wch: 25 }, // Instance Name
         { wch: 15 }, // CPU Mean
         { wch: 15 }, // CPU Max
@@ -214,15 +183,13 @@ const OCIMetricsUpdater = () => {
 
       // Format cells: Add % sign and center alignment
       const range = XLSX.utils.decode_range(ws['!ref']);
-      for (let row = 1; row <= range.e.r; row++) { // Start from row 1 (skip header)
-        for (let col = 2; col <= 5; col++) { // Columns C to F (CPU and Memory columns)
+      for (let row = 1; row <= range.e.r; row++) {
+        for (let col = 1; col <= 4; col++) {
           const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
           const cell = ws[cellAddress];
           if (cell && cell.v !== 'N/A') {
-            // Add % sign to the value
-            cell.t = 's'; // Set type to string
+            cell.t = 's';
             cell.v = cell.v + '%';
-            // Center alignment
             cell.s = {
               alignment: { horizontal: 'center', vertical: 'center' }
             };
@@ -231,7 +198,7 @@ const OCIMetricsUpdater = () => {
       }
 
       // Center align header row
-      for (let col = 0; col <= 5; col++) {
+      for (let col = 0; col <= 4; col++) {
         const cellAddress = XLSX.utils.encode_cell({ r: 0, c: col });
         const cell = ws[cellAddress];
         if (cell) {
@@ -242,18 +209,15 @@ const OCIMetricsUpdater = () => {
         }
       }
 
-      // Add worksheet to workbook
       XLSX.utils.book_append_sheet(wb, ws, 'OCI Metrics');
 
-      // Generate and download
       const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
       const blob = new Blob([wbout], { type: 'application/octet-stream' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       const date = new Date().toISOString().split('T')[0];
-      const compName = compartmentName ? `_${compartmentName.replace(/\s/g, '_')}` : '';
-      link.download = `OCI_Metrics${compName}_${date}.xlsx`;
+      link.download = `OCI_Metrics_${selectedProject}_${date}.xlsx`;
       link.click();
       URL.revokeObjectURL(url);
 
@@ -308,15 +272,18 @@ const OCIMetricsUpdater = () => {
 
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Compartment Name (Optional)
+              Select Project
             </label>
-            <input
-              type="text"
-              value={compartmentName}
-              onChange={(e) => setCompartmentName(e.target.value)}
-              placeholder="e.g., PRDAPPANLCOM"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors"
-            />
+            <select
+              value={selectedProject}
+              onChange={(e) => setSelectedProject(e.target.value)}
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors text-lg font-medium"
+            >
+              <option value="KwikPay">KwikPay</option>
+              <option value="BPL">BPL</option>
+              <option value="UIC">UIC</option>
+              <option value="Other">Other</option>
+            </select>
           </div>
 
           <div className="mb-6">
@@ -361,16 +328,16 @@ const OCIMetricsUpdater = () => {
           <div className="mt-6 p-4 bg-blue-50 rounded-lg">
             <h4 className="font-semibold text-blue-900 mb-2">How it works:</h4>
             <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
-              <li>Enter compartment name (optional)</li>
+              <li>Select your project from the dropdown (KwikPay, BPL, UIC, or Other)</li>
               <li>Upload CSV files from OCI dashboard (at least one)</li>
-              <li>Click "Generate Excel File" to create a new Excel file</li>
-              <li>The Excel will contain all instances found in the CSVs with their latest metrics</li>
-              <li>Repeat for other compartments and consolidate manually if needed</li>
+              <li>Click "Generate Excel File"</li>
+              <li>Instances will be ordered according to the selected project</li>
+              <li>Any extra instances not in the predefined list will appear at the bottom</li>
             </ol>
             <div className="mt-3 p-3 bg-blue-100 rounded">
               <p className="text-xs text-blue-900 font-medium">
-                <strong>Note:</strong> The app automatically extracts all instance names from your CSV files 
-                and picks the latest metric value for each instance.
+                <strong>Note:</strong> Missing instances from the predefined list will be skipped. 
+                Additional instances will be added at the bottom in alphabetical order.
               </p>
             </div>
           </div>
